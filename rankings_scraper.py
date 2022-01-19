@@ -58,9 +58,11 @@ def ls_to_df(ls_headers, ls_rankings_data):
     for i, element in enumerate(ls_headers):
         df[element] = pd.Series(ls_rankings_data[i :: len(ls_headers)])
     try:
-        df = df.set_index("#")
+        df = df.drop(columns="#")
     except:
         pass
+
+    df = df.set_index("EQUIPE")
     return df
 
 

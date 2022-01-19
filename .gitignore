@@ -3,4 +3,5 @@
 geckodriver.log
 /*.ipynb
 *.xls
+*.xlsx
 *.csv
