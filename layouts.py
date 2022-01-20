@@ -6,11 +6,18 @@ import plotly.express as px
 
 import pandas as pd
 
-app = dash.Dash(__name__)
+external_stylesheets = [
+    {
+        "href": "https://fonts.googleapis.com/css2?" "family=Lato:wght@400;700&display=swap",
+        "rel": "stylesheet",
+    },
+]
 
-df = pd.read_csv("ranking.csv")
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-available_indicators = df["EQUIPE"].unique()
+ranking_df = pd.read_csv("ranking.csv", sep=";")
+
+available_indicators = ranking_df["EQUIPE"].unique()
 # https://dash.plotly.com/basic-callbacks
 
 app.layout = html.Div(
@@ -54,10 +61,10 @@ app.layout = html.Div(
         dcc.Graph(id="indicator-graphic"),
         dcc.Slider(
             id="year--slider",
-            min=df["Year"].min(),
-            max=df["Year"].max(),
-            value=df["Year"].max(),
-            marks={str(year): str(year) for year in df["Year"].unique()},
+            min=ranking_df["Year"].min(),
+            max=ranking_df["Year"].max(),
+            value=ranking_df["Year"].max(),
+            marks={str(year): str(year) for year in ranking_df["Year"].unique()},
             step=None,
         ),
     ]
@@ -73,12 +80,14 @@ app.layout = html.Div(
     Input("year--slider", "value"),
 )
 def update_graph(xaxis_column_name, yaxis_column_name, xaxis_type, yaxis_type, year_value):
-    dff = df[df["Year"] == year_value]
+    ranking_dff = ranking_df[ranking_df["Year"] == year_value]
 
     fig = px.scatter(
-        x=dff[dff["Indicator Name"] == xaxis_column_name]["Value"],
-        y=dff[dff["Indicator Name"] == yaxis_column_name]["Value"],
-        hover_name=dff[dff["Indicator Name"] == yaxis_column_name]["Country Name"],
+        x=ranking_dff[ranking_dff["Indicator Name"] == xaxis_column_name]["Value"],
+        y=ranking_dff[ranking_dff["Indicator Name"] == yaxis_column_name]["Value"],
+        hover_name=ranking_dff[ranking_dff["Indicator Name"] == yaxis_column_name][
+            "Country Name"
+        ],
     )
 
     fig.update_layout(margin={"l": 40, "b": 40, "t": 10, "r": 0}, hovermode="closest")

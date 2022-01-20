@@ -8,10 +8,19 @@ from datetime import date
 from dash.dependencies import Input, Output
 from dash import dash_table
 
-df = pd.read_csv("ranking.csv", sep=";", index_col="EQUIPE")
-# df = df.drop(labels="PARKING BRUSSELS")
+ranking_df = pd.read_csv("ranking.csv", sep=";", index_col="EQUIPE")
 
+# ranking_df = ranking_df.drop(labels="PARKING BRUSSELS")
+
+# external_stylesheets = [
+#     {
+#         "href": "https://fonts.googleapis.com/css2?" "family=Lato:wght@400;700&display=swap",
+#         "rel": "stylesheet",
+#     },
+# ]
 app = dash.Dash(__name__)
+# app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
 app.title = "Medina Forest"
 app._favicon = "football.ico"
 
@@ -21,8 +30,8 @@ app._favicon = "football.ico"
 colors = {"background": "#111111", "text": "#FFFFFF"}
 
 fig = px.bar(
-    df.sort_values("PTS"),
-    x=df.index,
+    ranking_df.sort_values("PTS"),
+    x=ranking_df.index,
     y="PTS",
     color="J",
     barmode="stack",
@@ -45,9 +54,9 @@ app.layout = html.Div(
             id="datatable-interactivity",
             columns=[
                 {"name": i, "id": i, "deletable": False, "selectable": True}
-                for i in df.reset_index().columns
+                for i in ranking_df.reset_index().columns
             ],
-            data=df.reset_index().to_dict("records"),
+            data=ranking_df.reset_index().to_dict("records"),
             editable=True,
             filter_action="native",
             sort_action="native",
@@ -84,10 +93,11 @@ def update_graphs(rows, derived_virtual_selected_rows):
     if derived_virtual_selected_rows is None:
         derived_virtual_selected_rows = []
 
-    dff = df.reset_index() if rows is None else pd.DataFrame(rows)
+    ranking_dff = ranking_df.reset_index() if rows is None else pd.DataFrame(rows)
 
     colors = [
-        "#7FDBFF" if i in derived_virtual_selected_rows else "#0074D9" for i in range(len(dff))
+        "#7FDBFF" if i in derived_virtual_selected_rows else "#0074D9"
+        for i in range(len(ranking_dff))
     ]
 
     return [
@@ -96,15 +106,15 @@ def update_graphs(rows, derived_virtual_selected_rows):
             figure={
                 "data": [
                     {
-                        "x": dff["EQUIPE"],
-                        "y": dff["J"],
+                        "x": ranking_dff["EQUIPE"],
+                        "y": ranking_dff["J"],
                         "type": "bar",
                         "marker": {"color": colors},
                     }
                 ],
                 "layout": {
                     "xaxis": {"automargin": True},
-                    "yaxis": {"automargin": True, "title": {"text": dff.columns}},
+                    "yaxis": {"automargin": True, "title": {"text": ranking_dff.columns}},
                     "height": 250,
                     "margin": {"t": 10, "l": 10, "r": 10},
                 },
