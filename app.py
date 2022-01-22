@@ -146,8 +146,9 @@ def update_graphs(rows, derived_virtual_selected_rows):
 
 @app.callback(Output("line-chart", "figure"), [Input("checklist", "value")])
 def update_line_chart(value):
-    mask = ranking_timeline.index.isin(value)
-    fig = px.line(ranking_timeline[mask], x="year", y="lifeExp", color="country")
+    mask = melted_ranking_timeline["Equipe"].isin(value)
+    print(melted_ranking_timeline[mask])
+    fig = px.line(melted_ranking_timeline[mask], x="Journée", y="PTS", color="Equipe")
     return fig
 
 
