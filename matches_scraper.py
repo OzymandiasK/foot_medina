@@ -31,7 +31,7 @@ def matches_to_csv():
     firefox_profile.set_preference("browser.download.manager.showAlertOnComplete", False)
     firefox_profile.set_preference("browser.download.manager.closeWhenDone", True)
 
-    # options.headless = True
+    options.headless = True
     options.profile = firefox_profile
 
     driver = webdriver.Firefox(executable_path=GeckoDriverManager().install(), options=options)
