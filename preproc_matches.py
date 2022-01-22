@@ -47,7 +47,7 @@ def matches_played_df(matches):
 def ranking_through_time():
     matches = preproc_matches_df()
     matches = matches.dropna()
-    matches.drop(columns=["Salle", "Heure", "Arbitre"])
+    matches.drop(columns=["Salle", "Heure", "Arbitres"])
     matches["week_number"] = week_number_column(matches)
     matches[["PTS_home", "PTS_away"]] = pts_repartition_for_each_match_df(matches)
 
@@ -58,7 +58,7 @@ def ranking_through_time():
     ranking_timeline_df.iloc[:, 0] = 0
     matches_played = matches_played_df(matches)
 
-    for row in matches.iterrows():
+    for index, row in matches.iterrows():
 
         home_team = row["Domicile"]
         away_team = row["Extérieur"]
@@ -84,5 +84,16 @@ def ranking_through_time():
     return ranking_timeline_df
 
 
+def melt_ranking_timeline(ranking_timeline_df):
+    df = ranking_timeline_df.reset_index()
+    df = df.rename(columns={"Unnamed: 0": "Equipe"})
+    melted_df = pd.melt(df, id_vars="Equipe")
+    melted_df = melted_df.rename(columns={"variable": "Journée", "value": "PTS"})
+    melted_df = melted_df[melted_df["Journée"] != "index"]
+    melted_df = melted_df.reset_index()
+    return melted_df
+
+
 if __name__ == "__main__":
-    preproc_matches_df()
+    ranking_timeline_df = ranking_through_time()
+    ranking_timeline_df.to_csv("ranking_timeline.csv", sep=";")

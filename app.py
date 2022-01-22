@@ -7,17 +7,12 @@ import pandas as pd
 from datetime import date
 from dash.dependencies import Input, Output
 from dash import dash_table
+from preproc_matches import melt_ranking_timeline
 
 ranking_df = pd.read_csv("ranking.csv", sep=";", index_col="EQUIPE")
+ranking_timeline = pd.read_csv("ranking_timeline.csv", sep=";")
+melted_ranking_timeline = melt_ranking_timeline(ranking_timeline)
 
-# ranking_df = ranking_df.drop(labels="PARKING BRUSSELS")
-
-# external_stylesheets = [
-#     {
-#         "href": "https://fonts.googleapis.com/css2?" "family=Lato:wght@400;700&display=swap",
-#         "rel": "stylesheet",
-#     },
-# ]
 app = dash.Dash(__name__)
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -29,26 +24,33 @@ app._favicon = "football.ico"
 
 colors = {"background": "#111111", "text": "#FFFFFF"}
 
-fig = px.bar(
-    ranking_df.sort_values("PTS"),
-    x=ranking_df.index,
-    y="PTS",
-    color="J",
-    barmode="stack",
-    color_continuous_scale=px.colors.sequential.Sunsetdark,
+# fig = px.bar(
+#     ranking_df.sort_values("PTS"),
+#     x=ranking_df.index,
+#     y="PTS",
+#     color="J",
+#     barmode="stack",
+#     color_continuous_scale=px.colors.sequential.Sunsetdark,
+# )
+
+ranking_plot_line = px.line(
+    melted_ranking_timeline,
+    x=melted_ranking_timeline["Journée"],
+    y=melted_ranking_timeline["PTS"],
+    color=melted_ranking_timeline["Equipe"],
+    title="Evolution du Classement",
 )
+ranking_plot_line.update_traces(line=dict(width=4))
 # fig.update_layout(
 #     plot_bgcolor=colors["background"],
 #     paper_bgcolor=colors["background"],
 #     font_color=colors["text"],
 # )
-black = "#000000"
-
 app.layout = html.Div(
     [
         html.H1(
             "Medina Forest",
-            style={"textAlign": "center", "color": black, "fontFamily": "lato"},
+            style={"textAlign": "center", "color": "#000000", "fontFamily": "lato"},
         ),
         dash_table.DataTable(
             id="datatable-interactivity",
@@ -71,6 +73,19 @@ app.layout = html.Div(
             page_size=12,
         ),
         html.Div(id="datatable-interactivity-container"),
+        html.Div(
+            [
+                dcc.Checklist(
+                    id="checklist",
+                    options=[
+                        {"label": x, "value": x}
+                        for x in melted_ranking_timeline["Equipe"].unique()
+                    ],
+                    labelStyle={"display": "inline-block"},
+                ),
+                dcc.Graph(figure=ranking_plot_line, id="line-chart"),
+            ]
+        ),
     ]
 )
 
@@ -99,28 +114,41 @@ def update_graphs(rows, derived_virtual_selected_rows):
         "#7FDBFF" if i in derived_virtual_selected_rows else "#0074D9"
         for i in range(len(ranking_dff))
     ]
-
+    ranking_dff_sorted = ranking_dff.sort_values(by="PTS", ascending=True)
     return [
         dcc.Graph(
             id="column",
             figure={
                 "data": [
                     {
-                        "x": ranking_dff["EQUIPE"],
-                        "y": ranking_dff["J"],
+                        "title": "Classement et nombre de matches joués",
+                        "x": ranking_dff_sorted["EQUIPE"],
+                        "y": ranking_dff_sorted["PTS"],
                         "type": "bar",
+                        "text": ranking_dff_sorted["J"],
+                        "textposition": "auto",
                         "marker": {"color": colors},
                     }
                 ],
                 "layout": {
                     "xaxis": {"automargin": True},
-                    "yaxis": {"automargin": True, "title": {"text": ranking_dff.columns}},
+                    "yaxis": {
+                        "automargin": True,
+                        "title": {"text": ranking_dff_sorted.columns},
+                    },
                     "height": 250,
                     "margin": {"t": 10, "l": 10, "r": 10},
                 },
             },
         )
     ]
+
+
+@app.callback(Output("line-chart", "figure"), [Input("checklist", "value")])
+def update_line_chart(value):
+    mask = ranking_timeline.index.isin(value)
+    fig = px.line(ranking_timeline[mask], x="year", y="lifeExp", color="country")
+    return fig
 
 
 if __name__ == "__main__":
